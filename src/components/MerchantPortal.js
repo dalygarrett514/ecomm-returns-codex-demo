@@ -571,7 +571,7 @@ export default function MerchantPortal({ api }) {
                           <div className="status-message">{insightNotice}</div>
                         )}
 
-                        {insightLoading && !productDetail?.latestInsight && (
+                        {insightLoading && (
                           <div className="loading-row">
                             <span className="spinner" aria-hidden="true" />
                             <span>Generating insight...</span>
