@@ -1,6 +1,6 @@
-# Returns Intelligence Demo (Codex Hackathon)
+# Returns Intelligence Console — lululemon Demo (Codex Hackathon)
 
-React + Express + PostgreSQL demo showing how AI can turn eCommerce returns from a cost center into business intelligence.
+React + Express + PostgreSQL demo showing how Codex turns returns into actionable retail intelligence.
 
 ## What this demo proves
 
@@ -10,8 +10,8 @@ React + Express + PostgreSQL demo showing how AI can turn eCommerce returns from
 ## Core capabilities
 
 - Auth0 RBAC with role-specific interfaces:
-  - `customer`: submit returns, view orders and return status
-  - `merchant`: analytics dashboard, product issue deep dive, AI insights, action items
+  - `customer`: browse orders, submit returns, view return status
+  - `merchant`: analytics dashboard, product issue deep dive, Codex insights, action items
 - PostgreSQL persistence for:
   - orders, order_items, returns, products, merchants
   - AI return analysis (`return_ai_analysis`)
@@ -21,6 +21,14 @@ React + Express + PostgreSQL demo showing how AI can turn eCommerce returns from
   - Return analysis on every submission (`analyzeReturnReason`)
   - Pattern detection for product-level issues (`detectPatterns`)
   - Recommendation + ROI generation (`generateRecommendations`)
+- Merchant UX highlights:
+  - Product issues list with severity indicator
+  - Interactive returns trend chart
+  - Insight modal with What-if savings + Codex Decision Trace
+  - Action items with Codex-composed impact notes on completion
+- Customer UX highlights:
+  - Return modal flow (reason only, Codex auto-categorizes)
+  - In-transit orders are not eligible for returns
 
 ## Tech stack
 
@@ -36,6 +44,10 @@ React + Express + PostgreSQL demo showing how AI can turn eCommerce returns from
 - `/server`: API, auth middleware, Codex services, tests
 - `/server/db/schema.sql`: DB schema
 - `/server/tests`: meaningful backend tests
+  - `categorization.test.js`
+  - `insights.test.js`
+  - `recommendations.test.js`
+  - `rbac.test.js`
 
 ## Setup
 
@@ -78,7 +90,9 @@ Local fallback mode is enabled with `AUTH_DISABLED=true` to demo both roles with
 - `POST /api/merchant/products/:productId/generate-insight`
   - calls `detectPatterns`
   - calls `generateRecommendations`
-  - stores insights + action items with estimated impact
+  - stores insights + recommendations with estimated impact
+- `PATCH /api/merchant/action-items/:actionItemId`
+  - on completion, Codex generates an impact note (non-blocking)
 - automatic best-effort insight refresh after return submission when threshold is met
 
 ## Tests (3-5 meaningful cases)
