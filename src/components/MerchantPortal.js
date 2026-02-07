@@ -356,7 +356,7 @@ export default function MerchantPortal({ api }) {
           Dashboard
         </button>
         <button type="button" className={activeTab === 'products' ? 'tab active' : 'tab'} onClick={() => setActiveTab('products')}>
-          Products With Issues
+          Returns
         </button>
         <button type="button" className={activeTab === 'actions' ? 'tab active' : 'tab'} onClick={() => setActiveTab('actions')}>
           Action Items
