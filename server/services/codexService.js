@@ -127,6 +127,7 @@ async function callCodexJson(systemPrompt, userPayload, fallbackValue) {
   const client = getOpenAIClient();
 
   if (!client) {
+    console.warn('[codex] client not configured, using fallback');
     return fallbackValue;
   }
 
@@ -139,20 +140,26 @@ async function callCodexJson(systemPrompt, userPayload, fallbackValue) {
           role: 'user',
           content: [{ type: 'input_text', text: JSON.stringify(userPayload) }]
         }
-      ],
-      temperature: 0.1
+      ]
     });
 
     const text = response.output_text;
     const parsed = safeJsonParse(text);
 
-    return parsed || fallbackValue;
-  } catch (_error) {
+    if (!parsed) {
+      console.warn('[codex] response parse failed, using fallback');
+      return fallbackValue;
+    }
+
+    return parsed;
+  } catch (error) {
+    console.warn('[codex] request failed, using fallback', error?.message || error);
     return fallbackValue;
   }
 }
 
 async function analyzeReturnReason(payload) {
+  console.log('[codex] analyzeReturnReason:start', { product: payload.product?.name });
   const fallback = heuristicReturnAnalysis(payload.reasonText, payload.categoryHint);
 
   const modelOutput = await callCodexJson(
@@ -165,7 +172,9 @@ async function analyzeReturnReason(payload) {
     fallback
   );
 
-  return parseReturnAnalysis(modelOutput, fallback);
+  const parsed = parseReturnAnalysis(modelOutput, fallback);
+  console.log('[codex] analyzeReturnReason:done');
+  return parsed;
 }
 
 function synthesizePatternData(rows = []) {
@@ -210,18 +219,24 @@ function parsePatternInsight(input, fallback) {
     return fallback;
   }
 
+  const parsedSource = input.sourcePattern && typeof input.sourcePattern === 'object' ? input.sourcePattern : fallback.sourcePattern;
+  const parsedConfidence = Number.isFinite(Number(input.confidence))
+    ? Number(input.confidence)
+    : Number(fallback.confidence || 0.7);
+
   return {
     title: String(input.title || fallback.title),
     description: String(input.description || fallback.description),
     priority: ['Critical', 'High', 'Medium', 'Low'].includes(input.priority) ? input.priority : fallback.priority,
-    confidence: Number(input.confidence || fallback.confidence || 0.7),
+    confidence: parsedConfidence,
     returnsAnalyzed: Number(input.returnsAnalyzed || fallback.returnsAnalyzed || 0),
-    sourcePattern: input.sourcePattern && typeof input.sourcePattern === 'object' ? input.sourcePattern : fallback.sourcePattern,
+    sourcePattern: parsedSource,
     estimatedSavingsCents: Number(input.estimatedSavingsCents || fallback.estimatedSavingsCents || 0)
   };
 }
 
 async function detectPatterns(payload) {
+  console.log('[codex] detectPatterns:start', { product: payload.product?.name, returns: payload.returns?.length });
   const baseline = synthesizePatternData(payload.returns);
 
   const fallback = {
@@ -248,7 +263,9 @@ async function detectPatterns(payload) {
     fallback
   );
 
-  return parsePatternInsight(modelOutput, fallback);
+  const parsed = parsePatternInsight(modelOutput, fallback);
+  console.log('[codex] detectPatterns:done');
+  return parsed;
 }
 
 function defaultRecommendationsFromPattern(pattern) {
@@ -333,7 +350,7 @@ function parseRecommendations(input, fallback) {
     ...fallback,
     recommendations: recommendations.filter((item) => item.action),
     estimatedSavingsCents: Number(input.estimatedSavingsCents || fallback.estimatedSavingsCents),
-    confidence: Number(input.confidence || fallback.confidence)
+    confidence: Number.isFinite(Number(input.confidence)) ? Number(input.confidence) : Number(fallback.confidence || 0.7)
   };
 }
 
@@ -348,6 +365,7 @@ function parseImpactNote(input, fallback) {
 }
 
 async function generateRecommendations(payload) {
+  console.log('[codex] generateRecommendations:start', { product: payload.product?.name });
   const fallbackRecommendations = defaultRecommendationsFromPattern(payload.patternInsight);
   const fallback = {
     recommendations: fallbackRecommendations,
@@ -364,10 +382,13 @@ async function generateRecommendations(payload) {
     fallback
   );
 
-  return parseRecommendations(modelOutput, fallback);
+  const parsed = parseRecommendations(modelOutput, fallback);
+  console.log('[codex] generateRecommendations:done');
+  return parsed;
 }
 
 async function generateImpactNote(payload) {
+  console.log('[codex] generateImpactNote:start', { product: payload.product?.name, action: payload.actionItem?.description });
   const fallback = {
     impactNote: `Completed action is expected to reduce returns by 6% and save ${payload.actionItem?.estimated_impact_cents ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(payload.actionItem.estimated_impact_cents / 100) : '$0'} next quarter.`
   };
@@ -382,7 +403,9 @@ async function generateImpactNote(payload) {
     fallback
   );
 
-  return parseImpactNote(modelOutput, fallback);
+  const parsed = parseImpactNote(modelOutput, fallback);
+  console.log('[codex] generateImpactNote:done');
+  return parsed;
 }
 
 module.exports = {
