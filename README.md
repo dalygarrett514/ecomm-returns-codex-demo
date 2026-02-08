@@ -1,4 +1,4 @@
-# Returns Intelligence Console — lululemon Demo (Codex Hackathon)
+# Returns Intelligence Console — lululemon Demo
 
 React + Express + PostgreSQL demo showing how Codex turns returns into actionable retail intelligence.
 
@@ -95,7 +95,7 @@ Local fallback mode is enabled with `AUTH_DISABLED=true` to demo both roles with
   - on completion, Codex generates an impact note (non-blocking)
 - automatic best-effort insight refresh after return submission when threshold is met
 
-## Tests (3-5 meaningful cases)
+## Tests
 
 Run:
 ```bash
@@ -126,4 +126,3 @@ Merchant:
 ## Notes
 
 - Set `OPENAI_API_KEY` in `.env` to enable live Codex calls.
-- Without API key, deterministic fallbacks keep demo flows functional.
