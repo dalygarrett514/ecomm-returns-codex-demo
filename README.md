@@ -1,4 +1,4 @@
-# Returns Intelligence Console — lululemon Demo
+# Returns Intelligence Console
 
 React + Express + PostgreSQL demo showing how Codex turns returns into actionable retail intelligence.
 
